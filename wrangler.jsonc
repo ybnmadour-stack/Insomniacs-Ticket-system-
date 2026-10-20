@@ -4,5 +4,6 @@
   "main": "worker.mjs",
   "compatibility_date": "2026-10-20",
   "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
-  "d1_databases": [{ "binding": "DB", "database_name": "insomniacs-tickets", "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID", "migrations_dir": "migrations" }]
+  "d1_databases": [{ "binding": "DB", "database_name": "insomniacs-tickets", "database_id": "19e2a828-0a13-4eb4-9cd2-2d0240735562", "migrations_dir": "migrations" }]
 }
+
