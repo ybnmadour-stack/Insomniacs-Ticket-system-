@@ -1,0 +1,13 @@
+import {test,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+process.env.NODE_ENV='test';const dir=mkdtempSync(join(tmpdir(),'bottles-test-'));process.env.DATA_DIR=dir;
+const {db,redeem,server}=await import('./server.mjs');
+await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
+const insert=(id,paid=1,cancelled=0)=>db.prepare('INSERT INTO tickets(id,name,paid,created,cancelled) VALUES(?,?,?,?,?)').run(id,'Test Guest',paid,new Date().toISOString(),cancelled);
+test('only one concurrent request can redeem a paid ticket',async()=>{insert('one');const results=await Promise.all(Array.from({length:20},()=>Promise.resolve().then(()=>redeem('one'))));assert.equal(results.filter(Boolean).length,1);});
+test('reject unpaid, cancelled and unknown tickets',()=>{insert('unpaid',0);insert('cancelled',1,1);assert.equal(redeem('unpaid'),undefined);assert.equal(redeem('cancelled'),undefined);assert.equal(redeem('missing'),undefined);});
+test('setup, staff access and public ticket privacy',async()=>{const post=(path,body,cookie)=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',...(cookie?{cookie}:{})},body:JSON.stringify(body)});assert.equal((await fetch(base+'/api/tickets')).status,401);assert.equal((await post('/api/setup',{admin:'organiser-pass-123',staff:'staff-password-123'})).status,200);assert.equal((await post('/api/setup',{})).status,409);const login=await post('/api/login',{role:'staff',password:'staff-password-123'});const cookie=login.headers.get('set-cookie').split(';')[0];assert.equal((await fetch(base+'/api/tickets',{headers:{cookie}})).status,403);assert.equal((await post('/api/config',{capacity:0},cookie)).status,403);insert('public');const publicData=await (await fetch(base+'/api/ticket/public')).json();assert.equal(publicData.ticket.name,'Test Guest');assert.equal(publicData.ticket.phone,undefined);assert.equal((await post('/api/checkin',{id:'public'},cookie)).status,200);assert.equal((await post('/api/checkin',{id:'public'},cookie)).status,409);});
+after(async()=>{await new Promise(r=>server.close(r));db.close();rmSync(dir,{recursive:true,force:true});});
