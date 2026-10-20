@@ -1,5 +1,7 @@
 # Bottles Up — Halloween Vol. 2
 
+**Free cloud hosting is now supported:** see [FREE-HOSTING.md](FREE-HOSTING.md) for Cloudflare Workers + D1 setup. `worker.mjs` is the cloud entrypoint; `server.mjs` remains the local version. Run `node --test worker.test.mjs` to test the cloud API against a local SQL adapter. The instructions below describe the original local server.
+
 Mobile ticketing with the supplied poster, WhatsApp sharing, QR tickets, staff camera scanning, organiser controls, and single-use admission. No online payments. Requires Node.js 24 or later. No package installation needed; QR libraries are included locally.
 
 ## Start
